@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  nginx:
+    build: .docker/nginx
+    entrypoint: wait-for db:3306 -t 60 -- ./docker-entrypoint.sh nginx -g 'daemon off;'
+    ports:
+      - "8080:80"
+    networks:
+      - fc
+    depends_on:
+      - db
+
+  db:
+    build: .docker/mysql
+    image: mysql
+    restart: always
+    volumes:
+      - ./.docker/mysql/data:/var/lib/mysql
+    networks:
+      - fc
+
+  node:
+    image: node:16-alpine
+    restart: always
+    environment:
+      - PORT=3000
+    networks:
+      - fc
+    volumes:
+      - .:/app/
+    working_dir: /app/
+    command: npm run start
+    depends_on:
+      - db
+
+networks:
+  fc:
+    driver: bridge
