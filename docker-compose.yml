@@ -3,13 +3,12 @@ version: "3"
 services:
   nginx:
     build: .docker/nginx
-    entrypoint: wait-for db:3306 -t 60 -- ./docker-entrypoint.sh nginx -g 'daemon off;'
     ports:
       - "8080:80"
     networks:
       - fc
     depends_on:
-      - db
+      - node
 
   db:
     build: .docker/mysql
@@ -21,7 +20,9 @@ services:
       - fc
 
   node:
-    image: node:16-alpine
+    build: .docker/node
+    entrypoint: .docker/node/entrypoint.sh
+    image: node:16
     restart: always
     environment:
       - PORT=3000
@@ -29,8 +30,6 @@ services:
       - fc
     volumes:
       - .:/app/
-    working_dir: /app/
-    command: npm run start
     depends_on:
       - db
 
